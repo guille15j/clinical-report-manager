@@ -7,7 +7,7 @@ export type UserRole = "PACIENTE" | "DOCTOR" | "CLINICA";
 export type ImbalanceLevel = "OPTIMO" | "LEVE" | "SEVERO";
 
 // Estado de los informes de las analiticas
-export type AnalysisStatus = "PENDIENTE" | "REVISADO" | "PROCESO";
+export type AnalysisStatus = "SOLICITADO" | "PROCESANDO" | "PENDIENTE" | "PUBLICADO";
 
 // Modelado de Datos Base de datos based -------------------------------------------------
 
@@ -75,10 +75,12 @@ export interface ActionPlanItem {
 export interface MicrobiomeReport {
     id: string;
     patientId: string;
+    trackingCode: string;
     patientName: string;
     analysisDate: string;
     diversityIndex: number;                 // 0-10
     dysbiosisLevel: ImbalanceLevel;
+    stauts : AnalysisStatus;
     biomarkers: Biomarker[];
     actionPlan: ActionPlanItem[];
 }

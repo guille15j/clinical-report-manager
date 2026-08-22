@@ -87,7 +87,7 @@
         </createTable>
     </changeSet>
 
-    <!-- Changeset 5: Tabla de Informes de Microbiota -->
+    <!-- Changeset 5: Tabla de Informes de Microbiota (Actualizado) -->
     <changeSet id="5-create-microbiome-reports-table" author="microbiome-team">
         <createTable tableName="microbiome_reports">
             <column name="id" type="VARCHAR(36)">
@@ -95,6 +95,10 @@
             </column>
             <column name="patient_id" type="VARCHAR(36)">
                 <constraints nullable="false" foreignKeyName="fk_reports_patients" references="patients(id)"/>
+            </column>
+            <column name="tracking_code" type="VARCHAR(50)">
+                <!-- El código de la caja física, debe ser único -->
+                <constraints nullable="false" unique="true"/>
             </column>
             <column name="analysis_date" type="VARCHAR(20)">
                 <constraints nullable="false"/>

@@ -23,6 +23,10 @@ Este repositorio contiene **dos proyectos independientes**:
 - **frontend/** → Dashboard clínico en Next.js 16  
 - **backend/** → API REST en Kotlin + Spring Boot  
 
+### Reglas de negocio impuestas
+
+El sistema centraliza la gestión de muestras biológicas y la interacción médica mediante un flujo de responsabilidades strictly separado. Cada prueba física se vincula unívocamente al sistema mediante un código de seguimiento (Tracking Code) impreso en la caja. A partir de su registro, el informe atraviesa un ciclo de vida cerrado en cuatro fases: Solicitado (esperando al laboratorio), En Proceso (volcado de datos brutos), Pendiente de Revisión (análisis algorítmico completado) y Publicado (validado clínicamente). Para garantizar la privacidad, la seguridad y el rendimiento de la interfaz, el acceso se divide en tres portales independientes (Clínica, Doctor y Paciente). Esto evita interfaces sobrecargadas de condiciones, permitiendo a las clínicas reasignar pacientes, a los doctores prescribir y editar planes de acción, y a los pacientes consultar de forma segura sus resultados definitivos y recomendaciones.
+
 ---
 
 ## 📂 Estructura del Repositorio
@@ -39,7 +43,6 @@ gestor-informes-clinicos/
 └── README.md        # Este archivo (documentación global)
 ```
 
-
 Cada módulo tiene su propio README con instrucciones específicas.
 
 ---
@@ -51,46 +54,37 @@ Cada módulo tiene su propio README con instrucciones específicas.
 - TypeScript (strict)
 - Tailwind CSS
 - shadcn/ui
-- Cliente HTTP centralizado (`lib/api.ts`)
+- Cliente HTTP centralizado (`lib/api.ts`) con soporte Bearer JWT
 - Componentes clínicos personalizados (semáforo, barras de rango, tablas de biomarcadores)
 
 ### **Backend**
 - Kotlin
-- Spring Boot 
+- Spring Boot
+- Liquibase (Migración de BD)
+- PostgreSQL
 
 ---
+
 ## 🧪 Estado del Proyecto
 
-El Gestor de Informes Clínicos se encuentra actualmente en su fase inicial de desarrollo.
+El Gestor de Informes Clínicos se encuentra en fase activa de construcción.
 
 ### 🔹 Backend (Kotlin + Spring Boot)
 - Estado: **Pendiente de implementación**
-- El desarrollo del backend comenzará hoy mismo.
-- Se definirá la arquitectura base, modelos clínicos y endpoints iniciales.
-- La API aún no está disponible, pero el diseño está en proceso.
+- Se han definido las migraciones de base de datos con Liquibase y el esquema relacional en PostgreSQL.
+- Se definirá la arquitectura base, modelos clínicos y endpoints RESTful siguiendo la especificación del cliente API.
 
 ### 🔹 Frontend (Next.js 16 + TypeScript)
-- Estado: **En construcción**
-- Se ha iniciado la estructura del proyecto y la configuración base (App Router, Tailwind, shadcn/ui).
-- Se están preparando las primeras vistas para disponer de una interfaz visual inicial.
-- El cliente HTTP y los componentes clínicos se implementarán en las próximas fases.
-
-### 🔹 Objetivo a corto plazo
-- Establecer la comunicación frontend ↔ backend.
-- Definir los tipos clínicos y modelos de datos.
-- Construir las primeras pantallas funcionales del dashboard.
-- Publicar una versión mínima navegable para revisión interna.
-
-### 🔹 Objetivo a medio plazo
-- Integrar módulos clínicos (microbiota, genética, metabolómica, etc.).
-- Añadir componentes visuales avanzados (rangos clínicos, semáforos, tablas dinámicas).
-- Preparar la plataforma para despliegue y pruebas con datos reales.
+- Estado: **En construcción (Fase de UI)**
+- Estructura de carpetas y arquitectura modular finalizadas.
+- Modelos estrictos TypeScript (`types/microbiome.ts`) y cliente centralizado API (`lib/api.ts`) totalmente definidos e integrados.
+- Siguiente hito: Instalación de componentes `shadcn/ui` y creación de widgets clínicos.
 
 ---
+
 # Esquema de datos
 
 ## 📊 Diagrama Entidad-Relación (ER Diagram)
-A continuación se representa la estructura y relaciones entre las tablas de la base de datos (Mermaid format):
 
 ```mermaid
 erDiagram
@@ -139,6 +133,7 @@ erDiagram
     microbiome_reports {
         VARCHAR_36 id PK
         VARCHAR_36 patient_id FK
+        VARCHAR_50 tracking_code UK
         VARCHAR_20 analysis_date
         DECIMAL_4_2 diversity_index
         VARCHAR_20 dysbiosis_level
@@ -191,7 +186,7 @@ Almacena las credenciales globales, roles e información de autenticación de la
 - **`id`** (`VARCHAR(36)`): Clave Primaria (UUID).
 - **`email`** (`VARCHAR(255)`): Correo electrónico del usuario (**Único**, `NOT NULL`).
 - **`password_hash`** (`VARCHAR(255)`): Hash seguro de la contraseña (`NOT NULL`).
-- **`role`** (`VARCHAR(20)`): Rol del usuario (ej. ADMIN, DOCTOR, PATIENT, CLINIC) (`NOT NULL`).
+- **`role`** (`VARCHAR(20)`): Rol del usuario (`CLINIC`, `DOCTOR`, `PATIENT`) (`NOT NULL`).
 - **`created_at`** (`TIMESTAMP`): Fecha y hora de creación (Default: `CURRENT_TIMESTAMP`, `NOT NULL`).
 
 ---
@@ -200,7 +195,7 @@ Almacena las credenciales globales, roles e información de autenticación de la
 Información general de las clínicas asociadas a la plataforma.
 - **`id`** (`VARCHAR(36)`): Clave Primaria.
 - **`user_id`** (`VARCHAR(36)`): FK hacia `users(id)` (`NOT NULL`).
-- **`name`** (`VARCHAR(150)`): Nombre comercial o institucional (`NOT NULL`).
+- **`name`** (`VARCHAR(150)`): Nombre comercial o institutional (`NOT NULL`).
 - **`address`** (`VARCHAR(255)`): Dirección física.
 - **`phone`** (`VARCHAR(50)`): Teléfono de contacto.
 
@@ -219,8 +214,8 @@ Información detallada sobre los profesionales de la salud.
 ### 4. `patients`
 Ficha técnica y demográfica de los pacientes.
 - **`id`** (`VARCHAR(36)`): Clave Primaria.
-- **`user_id`** (`VARCHAR(36)`): FK hacia `users(id)` (*Opcional / NULLABLE*, para pacientes que no tienen cuenta propia activa).
-- **`doctor_id`** (`VARCHAR(36)`): FK hacia `doctors(id)` (*Opcional / NULLABLE*).
+- **`user_id`** (`VARCHAR(36)`): FK hacia `users(id)` (*Opcional / NULLABLE*, para pacientes sin cuenta propia).
+- **`doctor_id`** (`VARCHAR(36)`): FK hacia `doctors(id)` (*Opcional / NULLABLE*, si es `NULL` es un cliente individual libre).
 - **`name`** (`VARCHAR(150)`): Nombre completo del paciente (`NOT NULL`).
 - **`age`** (`INT`): Edad (`NOT NULL`).
 - **`gender`** (`VARCHAR(10)`): Género (`NOT NULL`).
@@ -231,10 +226,11 @@ Ficha técnica y demográfica de los pacientes.
 Información consolidada de los análisis realizados a los pacientes.
 - **`id`** (`VARCHAR(36)`): Clave Primaria.
 - **`patient_id`** (`VARCHAR(36)`): FK hacia `patients(id)` (`NOT NULL`).
+- **`tracking_code`** (`VARCHAR(50)`): Código único de seguimiento del kit físico (**Único**, `NOT NULL`).
 - **`analysis_date`** (`VARCHAR(20)`): Fecha de ejecución del análisis (`NOT NULL`).
-- **`diversity_index`** (`DECIMAL(4,2)`): Índice numérico de diversidad de la microbiota (ej. Índice Shannon) (`NOT NULL`).
-- **`dysbiosis_level`** (`VARCHAR(20)`): Grado de disbiosis (ej. Leve, Moderado, Severo) (`NOT NULL`).
-- **`status`** (`VARCHAR(20)`): Estado del reporte (ej. PENDING, COMPLETED) (`NOT NULL`).
+- **`diversity_index`** (`DECIMAL(4,2)`): Índice numérico de diversidad de la microbiota (`NOT NULL`).
+- **`dysbiosis_level`** (`VARCHAR(20)`): Grado de desbarajuste/disbiosis (`OPTIMAL`, `MILD`, `SEVERE`) (`NOT NULL`).
+- **`status`** (`VARCHAR(20)`): Ciclo de vida (`REQUESTED`, `PROCESSING`, `PENDING_REVIEW`, `PUBLISHED`) (`NOT NULL`).
 
 ---
 
@@ -243,12 +239,12 @@ Marcadores biológicos específicos asociados a un informe de microbioma.
 - **`id`** (`VARCHAR(36)`): Clave Primaria.
 - **`report_id`** (`VARCHAR(36)`): FK hacia `microbiome_reports(id)` (`NOT NULL`).
 - **`name`** (`VARCHAR(100)`): Nombre del biomarcador o filotipo (`NOT NULL`).
-- **`category`** (`VARCHAR(100)`): Categoría (ej. Bacterias Beneficiosas, Patógenos) (`NOT NULL`).
+- **`category`** (`VARCHAR(100)`): Categoría o función (`NOT NULL`).
 - **`current_value`** (`DECIMAL(5,2)`): Valor obtenido en el examen (`NOT NULL`).
 - **`min_ref`** (`DECIMAL(5,2)`): Límite mínimo de referencia (`NOT NULL`).
 - **`max_ref`** (`DECIMAL(5,2)`): Límite máximo de referencia (`NOT NULL`).
-- **`unit`** (`VARCHAR(20)`): Unidad de medida (ej. %, log10/g) (`NOT NULL`).
-- **`status`** (`VARCHAR(20)`): Estado del indicador (ej. NORMAL, HIGH, LOW) (`NOT NULL`).
+- **`unit`** (`VARCHAR(20)`): Unidad de medida (`NOT NULL`).
+- **`status`** (`VARCHAR(20)`): Diagnóstico rápido (`NORMAL`, `HIGH`, `LOW`) (`NOT NULL`).
 
 ---
 
@@ -256,8 +252,7 @@ Marcadores biológicos específicos asociados a un informe de microbioma.
 Recomendaciones e intervenciones personalizadas basadas en el reporte de microbioma.
 - **`id`** (`VARCHAR(36)`): Clave Primaria.
 - **`report_id`** (`VARCHAR(36)`): FK hacia `microbiome_reports(id)` (`NOT NULL`).
-- **`category`** (`VARCHAR(30)`): Tipo de acción (ej. DIET, PROBIOTICS, LIFESTYLE) (`NOT NULL`).
+- **`category`** (`VARCHAR(30)`): Tipo de acción (`NUTRITION`, `SUPPLEMENTATION`, `LIFESTYLE`) (`NOT NULL`).
 - **`title`** (`VARCHAR(150)`): Título de la recomendación (`NOT NULL`).
 - **`description`** (`TEXT`): Explicación detallada del plan (`NOT NULL`).
-- **`priority`** (`VARCHAR(20)`): Prioridad (ej. HIGH, MEDIUM, LOW) (`NOT NULL`).
-
+- **`priority`** (`VARCHAR(20)`): Prioridad (`HIGH`, `MEDIUM`, `LOW`) (`NOT NULL`).
