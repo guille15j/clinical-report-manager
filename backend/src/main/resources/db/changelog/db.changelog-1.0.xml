@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Changeset 1: Tabla de Usuarios (Cuentas de acceso) -->
+    <changeSet id="1-create-users-table" author="microbiome-team">
+        <createTable tableName="users">
+            <column name="id" type="VARCHAR(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="email" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="password_hash" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <!-- Changeset 2: Tabla de Clínicas -->
+    <changeSet id="2-create-clinics-table" author="microbiome-team">
+        <createTable tableName="clinics">
+            <column name="id" type="VARCHAR(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="VARCHAR(36)">
+                <constraints nullable="false" foreignKeyName="fk_clinics_users" references="users(id)"/>
+            </column>
+            <column name="name" type="VARCHAR(150)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="address" type="VARCHAR(255)"/>
+            <column name="phone" type="VARCHAR(50)"/>
+        </createTable>
+    </changeSet>
+
+    <!-- Changeset 3: Tabla de Doctores -->
+    <changeSet id="3-create-doctors-table" author="microbiome-team">
+        <createTable tableName="doctors">
+            <column name="id" type="VARCHAR(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="VARCHAR(36)">
+                <constraints nullable="false" foreignKeyName="fk_doctors_users" references="users(id)"/>
+            </column>
+            <column name="clinic_id" type="VARCHAR(36)">
+                <constraints nullable="false" foreignKeyName="fk_doctors_clinics" references="clinics(id)"/>
+            </column>
+            <column name="name" type="VARCHAR(150)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="specialty" type="VARCHAR(100)"/>
+        </createTable>
+    </changeSet>
+
+    <!-- Changeset 4: Tabla de Pacientes (doctor_id es opcional/NULL) -->
+    <changeSet id="4-create-patients-table" author="microbiome-team">
+        <createTable tableName="patients">
+            <column name="id" type="VARCHAR(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="VARCHAR(36)">
+                <constraints nullable="true" foreignKeyName="fk_patients_users" references="users(id)"/>
+            </column>
+            <column name="doctor_id" type="VARCHAR(36)">
+                <!-- Si es NULL, es un paciente individual sin médico asignado -->
+                <constraints nullable="true" foreignKeyName="fk_patients_doctors" references="doctors(id)"/>
+            </column>
+            <column name="name" type="VARCHAR(150)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="age" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="gender" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <!-- Changeset 5: Tabla de Informes de Microbiota -->
+    <changeSet id="5-create-microbiome-reports-table" author="microbiome-team">
+        <createTable tableName="microbiome_reports">
+            <column name="id" type="VARCHAR(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="patient_id" type="VARCHAR(36)">
+                <constraints nullable="false" foreignKeyName="fk_reports_patients" references="patients(id)"/>
+            </column>
+            <column name="analysis_date" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="diversity_index" type="DECIMAL(4,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="dysbiosis_level" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <!-- Changeset 6: Tabla de Biomarcadores/Bacterias -->
+    <changeSet id="6-create-biomarkers-table" author="microbiome-team">
+        <createTable tableName="biomarkers">
+            <column name="id" type="VARCHAR(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="report_id" type="VARCHAR(36)">
+                <constraints nullable="false" foreignKeyName="fk_biomarkers_reports" references="microbiome_reports(id)"/>
+            </column>
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="category" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="current_value" type="DECIMAL(5,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="min_ref" type="DECIMAL(5,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_ref" type="DECIMAL(5,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="unit" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <!-- Changeset 7: Tabla de Planes de Acción -->
+    <changeSet id="7-create-action-plans-table" author="microbiome-team">
+        <createTable tableName="action_plans">
+            <column name="id" type="VARCHAR(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="report_id" type="VARCHAR(36)">
+                <constraints nullable="false" foreignKeyName="fk_action_plans_reports" references="microbiome_reports(id)"/>
+            </column>
+            <column name="category" type="VARCHAR(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(150)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="priority" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>
