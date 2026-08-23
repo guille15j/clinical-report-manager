@@ -1,0 +1,301 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1-create-users-table
+      author: microbiome-team
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: VARCHAR(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: password_hash
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 2-create-clinics-table
+      author: microbiome-team
+      changes:
+        - createTable:
+            tableName: clinics
+            columns:
+              - column:
+                  name: id
+                  type: VARCHAR(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: VARCHAR(36)
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_clinics_users
+                    referencedTableName: users
+                    referencedColumnNames: id
+              - column:
+                  name: name
+                  type: VARCHAR(150)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: address
+                  type: VARCHAR(255)
+              - column:
+                  name: phone
+                  type: VARCHAR(50)
+
+  - changeSet:
+      id: 3-create-doctors-table
+      author: microbiome-team
+      changes:
+        - createTable:
+            tableName: doctors
+            columns:
+              - column:
+                  name: id
+                  type: VARCHAR(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: VARCHAR(36)
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_doctors_users
+                    referencedTableName: users
+                    referencedColumnNames: id
+              - column:
+                  name: clinic_id
+                  type: VARCHAR(36)
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_doctors_clinics
+                    referencedTableName: clinics
+                    referencedColumnNames: id
+              - column:
+                  name: name
+                  type: VARCHAR(150)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: specialty
+                  type: VARCHAR(100)
+
+  - changeSet:
+      id: 4-create-patients-table
+      author: microbiome-team
+      changes:
+        - createTable:
+            tableName: patients
+            columns:
+              - column:
+                  name: id
+                  type: VARCHAR(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: VARCHAR(36)
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_patients_users
+                    referencedTableName: users
+                    referencedColumnNames: id
+              - column:
+                  name: doctor_id
+                  type: VARCHAR(36)
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_patients_doctors
+                    referencedTableName: doctors
+                    referencedColumnNames: id
+              - column:
+                  name: name
+                  type: VARCHAR(150)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: age
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: gender
+                  type: VARCHAR(10)
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 5-create-microbiome-reports-table
+      author: microbiome-team
+      changes:
+        - createTable:
+            tableName: microbiome_reports
+            columns:
+              - column:
+                  name: id
+                  type: VARCHAR(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: patient_id
+                  type: VARCHAR(36)
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_reports_patients
+                    referencedTableName: patients
+                    referencedColumnNames: id
+              - column:
+                  name: tracking_code
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: analysis_date
+                  type: DATE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: diversity_index
+                  type: DECIMAL(4,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: dysbiosis_level
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 6-create-biomarkers-table
+      author: microbiome-team
+      changes:
+        - createTable:
+            tableName: biomarkers
+            columns:
+              - column:
+                  name: id
+                  type: VARCHAR(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: report_id
+                  type: VARCHAR(36)
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_biomarkers_reports
+                    referencedTableName: microbiome_reports
+                    referencedColumnNames: id
+                    onDelete: CASCADE
+              - column:
+                  name: name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: category
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: current_value
+                  type: DECIMAL(5,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: min_ref
+                  type: DECIMAL(5,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: max_ref
+                  type: DECIMAL(5,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: unit
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 7-create-action-plans-table
+      author: microbiome-team
+      changes:
+        - createTable:
+            tableName: action_plans
+            columns:
+              - column:
+                  name: id
+                  type: VARCHAR(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: report_id
+                  type: VARCHAR(36)
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_action_plans_reports
+                    referencedTableName: microbiome_reports
+                    referencedColumnNames: id
+                    onDelete: CASCADE
+              - column:
+                  name: category
+                  type: VARCHAR(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: title
+                  type: VARCHAR(150)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: priority
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
