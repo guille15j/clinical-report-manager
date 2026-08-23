@@ -128,3 +128,33 @@
     @apply font-sans;
   }
 }
+
+@media print {
+  /* Configuración estricta de tamaño A4 y márgenes */
+  @page {
+    size: A4 portrait;
+    margin: 10mm 12mm 10mm 12mm;
+  }
+
+  /* Forzar altura fija y eliminar desbordamientos */
+  html,
+  body {
+    width: 210mm;
+    height: 297mm;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Evitar saltos de página dentro de bloques críticos */
+  header,
+  footer,
+  section,
+  .print-no-break {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
