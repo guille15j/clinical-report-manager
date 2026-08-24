@@ -1,98 +1,127 @@
-<h1 align="center">🧬 Gestor de Informes Clínicos — Plataforma Full‑Stack</h1>
+<h1 align="center">🧬 Gestor de Informes Clínicos</h1>
+<p align="center">Plataforma Full-Stack para el procesamiento, análisis y visualización de informes de microbioma y biomarcadores</p>
+
 <p align="center">
-  <b>Next.js 16 · TypeScript · Tailwind CSS · shadcn/ui · Kotlin · Spring Boot</b>
+  <img src="https://img.shields.io/badge/Next.js-16-000000?logo=next.js&logoColor=white" alt="Next.js 16" />
+  <img src="https://img.shields.io/badge/TypeScript-Strict-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Kotlin-2.3-7F52FF?logo=kotlin&logoColor=white" alt="Kotlin" />
+  <img src="https://img.shields.io/badge/Spring%20Boot-4.1-6DB33F?logo=springboot&logoColor=white" alt="Spring Boot" />
+  <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/Liquibase-Migrations-2962FF?logo=liquibase&logoColor=white" alt="Liquibase" />
+  <img src="https://img.shields.io/badge/License-Proprietary-lightgrey" alt="License" />
 </p>
 
 ---
 
-## 📘 Descripción General
+## 📘 Visión General del Sistema
 
-El **Gestor de Informes Clínicos** es una plataforma full‑stack diseñada para visualizar, analizar y generar informes clínicos accionables a partir de datos biomédicos.  
-Está pensada para profesionales de la salud que necesitan identificar rápidamente:
+El **Gestor de Informes Clínicos** es una plataforma diseñada para convertir datos biomédicos crudos (análisis de microbiota, biomarcadores, paneles funcionales) en informes clínicos accionables, trazables y auditables.
 
-- Alteraciones relevantes en biomarcadores  
-- Índices de salud global  
-- Recomendaciones de intervención  
-- Evolución del paciente a lo largo del tiempo  
+El sistema resuelve tres problemas centrales del dominio HealthTech:
 
-La plataforma está diseñada para ser **modular y extensible**, permitiendo integrar distintos tipos de análisis clínicos:  
-microbiota, genética, metabolómica, hematología, paneles funcionales, etc.
+1. **Trazabilidad física-digital**: cada muestra biológica se vincula de forma unívoca a su informe digital mediante un `tracking_code`, eliminando ambigüedad entre kit físico y resultado.
+2. **Gobernanza del ciclo de vida clínico**: ningún informe llega al paciente sin pasar por un flujo de validación algorítmica y revisión médica explícita.
+3. **Aislamiento de responsabilidades por rol**: Clínica, Doctor y Paciente operan sobre superficies de datos y acciones completamente distintas, reduciendo superficie de error y de fuga de información sensible.
 
-Este repositorio contiene **dos proyectos independientes**:
-
-- **frontend/** → Dashboard clínico en Next.js 16  
-- **backend/** → API REST en Kotlin + Spring Boot  
-
-### Reglas de negocio impuestas
-
-El sistema centraliza la gestión de muestras biológicas y la interacción médica mediante un flujo de responsabilidades strictly separado. Cada prueba física se vincula unívocamente al sistema mediante un código de seguimiento (Tracking Code) impreso en la caja. A partir de su registro, el informe atraviesa un ciclo de vida cerrado en cuatro fases: Solicitado (esperando al laboratorio), En Proceso (volcado de datos brutos), Pendiente de Revisión (análisis algorítmico completado) y Publicado (validado clínicamente). Para garantizar la privacidad, la seguridad y el rendimiento de la interfaz, el acceso se divide en tres portales independientes (Clínica, Doctor y Paciente). Esto evita interfaces sobrecargadas de condiciones, permitiendo a las clínicas reasignar pacientes, a los doctores prescribir y editar planes de acción, y a los pacientes consultar de forma segura sus resultados definitivos y recomendaciones.
+La arquitectura está diseñada para ser **extensible a otros dominios de análisis clínico** (genética, metabolómica, hematología) sin reescribir el núcleo del sistema.
 
 ---
 
-## 📂 Estructura del Repositorio
+## 🏗️ Arquitectura del Repositorio
+
+Monorepo con dos proyectos independientes y ciclos de despliegue desacoplados:
 
 ```bash
 gestor-informes-clinicos/
 │
-├── frontend/        # Dashboard clínico (Next.js 16)
+├── frontend/                # Dashboard clínico — Next.js 16 (App Router)
+│   ├── app/                 # Rutas y portales por rol
+│   ├── components/          # Componentes UI y de dominio clínico
+│   ├── lib/                 # Cliente API, utilidades
+│   ├── types/                # Contratos TypeScript estrictos
 │   └── README.md
 │
-├── backend/         # API REST (Kotlin + Spring Boot)
+├── backend/                 # API REST — Kotlin + Spring Boot
+│   ├── src/main/kotlin/      # Controller → Service → Repository → Domain
+│   ├── src/main/resources/   # Configuración, changelogs Liquibase
 │   └── README.md
 │
-└── README.md        # Este archivo (documentación global)
+└── README.md                 # Documentación global (este archivo)
 ```
 
-Cada módulo tiene su propio README con instrucciones específicas.
+**Contrato de integración:** el frontend consume el backend exclusivamente vía REST/JSON, autenticado con `Authorization: Bearer <JWT>` y versionado mediante la cabecera `X-API-VERSION: 1`.
 
 ---
 
-## 🧱 Tecnologías
+## 🔐 Reglas de Negocio
 
-### **Frontend**
-- Next.js 16 (App Router)
-- TypeScript (strict)
-- Tailwind CSS
-- shadcn/ui
-- Cliente HTTP centralizado (`lib/api.ts`) con soporte Bearer JWT
-- Componentes clínicos personalizados (semáforo, barras de rango, tablas de biomarcadores)
+### Ciclo de vida del informe
 
-### **Backend**
-- Kotlin
-- Spring Boot
-- Liquibase (Migración de BD)
-- PostgreSQL
+Cada `microbiome_report` atraviesa un flujo de estados **estrictamente secuencial y no reversible**, controlado por el backend:
+
+```mermaid
+stateDiagram-v2
+    [*] --> SOLICITADO: Registro del tracking_code
+    SOLICITADO --> PROCESANDO: Laboratorio inicia volcado de datos
+    PROCESANDO --> PENDIENTE: Pipeline algorítmico completado
+    PENDIENTE --> PUBLICADO: Validación clínica del Doctor
+    PUBLICADO --> [*]
+
+    note right of SOLICITADO
+        Kit físico vinculado.
+        Sin datos biológicos aún.
+    end note
+    note right of PENDIENTE
+        Visible solo para DOCTOR.
+        Requiere revisión de plan de acción.
+    end note
+    note right of PUBLICADO
+        Visible para PACIENTE.
+        Inmutable tras publicación.
+    end note
+```
+
+| Estado | Descripción | Visible para |
+|---|---|---|
+| `SOLICITADO` | Kit registrado, a la espera del laboratorio | Clínica, Doctor |
+| `PROCESANDO` | Datos brutos en pipeline de análisis | Clínica, Doctor |
+| `PENDIENTE` | Análisis completado, pendiente de validación médica | Doctor |
+| `PUBLICADO` | Validado y disponible para el paciente | Paciente, Doctor, Clínica |
+
+### Separación de portales por rol
+
+```mermaid
+flowchart LR
+    A[Usuario autenticado] -->|role=CLINICA| B[Portal Clínica]
+    A -->|role=DOCTOR| C[Portal Doctor]
+    A -->|role=PACIENTE| D[Portal Paciente]
+
+    B --> B1[Gestión de pacientes]
+    B --> B2[Asignación de doctores]
+    B --> B3[Métricas operacionales]
+
+    C --> C1[Cola de revisión clínica]
+    C --> C2[Edición de plan de acción]
+    C --> C3[Publicación de informes]
+
+    D --> D1[Consulta de informe publicado]
+    D --> D2[Seguimiento de plan de acción]
+    D --> D3[Exportación / impresión]
+```
+
+Cada portal es una superficie de UI y de API independiente: no existen condicionales de rol dispersos en componentes compartidos, sino vistas dedicadas por rol (`PatientView`, `DoctorView`, `ClinicView`) respaldadas por autorización RBAC en el backend.
 
 ---
 
-## 🧪 Estado del Proyecto
-
-El Gestor de Informes Clínicos se encuentra en fase activa de construcción.
-
-### 🔹 Backend (Kotlin + Spring Boot)
-- Estado: **Pendiente de implementación**
-- Se han definido las migraciones de base de datos con Liquibase y el esquema relacional en PostgreSQL.
-- Se definirá la arquitectura base, modelos clínicos y endpoints RESTful siguiendo la especificación del cliente API.
-
-### 🔹 Frontend (Next.js 16 + TypeScript)
-- Estado: **En construcción (Fase de UI)**
-- Estructura de carpetas y arquitectura modular finalizadas.
-- Modelos estrictos TypeScript (`types/microbiome.ts`) y cliente centralizado API (`lib/api.ts`) totalmente definidos e integrados.
-- Siguiente hito: Instalación de componentes `shadcn/ui` y creación de widgets clínicos.
-
----
-
-# Esquema de datos
-
-## 📊 Diagrama Entidad-Relación (ER Diagram)
+## 🧬 Modelo de Datos
 
 ```mermaid
 erDiagram
-    users ||--o{ clinics : "administra / gestiona"
+    users ||--o{ clinics : "administra"
     users ||--o{ doctors : "perfil de médico"
-    users ||--o| patients : "cuenta de paciente (opcional)"
-    clinics ||--o{ doctors : "emplea / asigna"
-    doctors ||--o{ patients : "atiende / supervisa"
+    users ||--o| patients : "cuenta opcional"
+    clinics ||--o{ doctors : "emplea"
+    doctors ||--o{ patients : "atiende"
     patients ||--o{ microbiome_reports : "posee"
     microbiome_reports ||--o{ biomarkers : "contiene"
     microbiome_reports ||--o{ action_plans : "genera"
@@ -162,97 +191,17 @@ erDiagram
     }
 ```
 
----
+### Relaciones (Foreign Keys)
 
-## 🔗 Relaciones (Foreign Keys)
+| Tabla Origen | Columna FK | Tabla Referenciada | Constraint | Cardinalidad | Nulabilidad |
+|---|---|---|---|---|---|
+| `clinics` | `user_id` | `users(id)` | `fk_clinics_users` | N:1 | `NOT NULL` |
+| `doctors` | `user_id` | `users(id)` | `fk_doctors_users` | N:1 | `NOT NULL` |
+| `doctors` | `clinic_id` | `clinics(id)` | `fk_doctors_clinics` | N:1 | `NOT NULL` |
+| `patients` | `user_id` | `users(id)` | `fk_patients_users` | 1:1 opcional | `NULLABLE` |
+| `patients` | `doctor_id` | `doctors(id)` | `fk_patients_doctors` | N:1 | `NULLABLE` |
+| `microbiome_reports` | `patient_id` | `patients(id)` | `fk_reports_patients` | N:1 | `NOT NULL` |
+| `biomarkers` | `report_id` | `microbiome_reports(id)` | `fk_biomarkers_reports` | N:1 | `NOT NULL` |
+| `action_plans` | `report_id` | `microbiome_reports(id)` | `fk_action_plans_reports` | N:1 | `NOT NULL` |
 
-| Tabla Origen | Columna FK | Tabla Referenciada | Columna PK | Nombre de FK Constraint | Cardinalidad | Restricción Nulo |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `clinics` | `user_id` | `users` | `id` | `fk_clinics_users` | N:1 | NOT NULL |
-| `doctors` | `user_id` | `users` | `id` | `fk_doctors_users` | N:1 | NOT NULL |
-| `doctors` | `clinic_id` | `clinics` | `id` | `fk_doctors_clinics` | N:1 | NOT NULL |
-| `patients` | `user_id` | `users` | `id` | `fk_patients_users` | N:1 / 1:1 | NULLABLE |
-| `patients` | `doctor_id` | `doctors` | `id` | `fk_patients_doctors` | N:1 | NULLABLE |
-| `microbiome_reports` | `patient_id` | `patients` | `id` | `fk_reports_patients` | N:1 | NOT NULL |
-| `biomarkers` | `report_id` | `microbiome_reports` | `id` | `fk_biomarkers_reports` | N:1 | NOT NULL |
-| `action_plans` | `report_id` | `microbiome_reports` | `id` | `fk_action_plans_reports` | N:1 | NOT NULL |
-
----
-
-## 🗂️ Detalle de Tablas
-
-### 1. `users`
-Almacena las credenciales globales, roles e información de autenticación de la plataforma.
-- **`id`** (`VARCHAR(36)`): Clave Primaria (UUID).
-- **`email`** (`VARCHAR(255)`): Correo electrónico del usuario (**Único**, `NOT NULL`).
-- **`password_hash`** (`VARCHAR(255)`): Hash seguro de la contraseña (`NOT NULL`).
-- **`role`** (`VARCHAR(20)`): Rol del usuario (`CLINIC`, `DOCTOR`, `PATIENT`) (`NOT NULL`).
-- **`created_at`** (`TIMESTAMP`): Fecha y hora de creación (Default: `CURRENT_TIMESTAMP`, `NOT NULL`).
-
----
-
-### 2. `clinics`
-Información general de las clínicas asociadas a la plataforma.
-- **`id`** (`VARCHAR(36)`): Clave Primaria.
-- **`user_id`** (`VARCHAR(36)`): FK hacia `users(id)` (`NOT NULL`).
-- **`name`** (`VARCHAR(150)`): Nombre comercial o institutional (`NOT NULL`).
-- **`address`** (`VARCHAR(255)`): Dirección física.
-- **`phone`** (`VARCHAR(50)`): Teléfono de contacto.
-
----
-
-### 3. `doctors`
-Información detallada sobre los profesionales de la salud.
-- **`id`** (`VARCHAR(36)`): Clave Primaria.
-- **`user_id`** (`VARCHAR(36)`): FK hacia `users(id)` (`NOT NULL`).
-- **`clinic_id`** (`VARCHAR(36)`): FK hacia `clinics(id)` (`NOT NULL`).
-- **`name`** (`VARCHAR(150)`): Nombre completo del médico (`NOT NULL`).
-- **`specialty`** (`VARCHAR(100)`): Especialidad médica (ej. Gastroenterología, Nutrición).
-
----
-
-### 4. `patients`
-Ficha técnica y demográfica de los pacientes.
-- **`id`** (`VARCHAR(36)`): Clave Primaria.
-- **`user_id`** (`VARCHAR(36)`): FK hacia `users(id)` (*Opcional / NULLABLE*, para pacientes sin cuenta propia).
-- **`doctor_id`** (`VARCHAR(36)`): FK hacia `doctors(id)` (*Opcional / NULLABLE*, si es `NULL` es un cliente individual libre).
-- **`name`** (`VARCHAR(150)`): Nombre completo del paciente (`NOT NULL`).
-- **`age`** (`INT`): Edad (`NOT NULL`).
-- **`gender`** (`VARCHAR(10)`): Género (`NOT NULL`).
-
----
-
-### 5. `microbiome_reports`
-Información consolidada de los análisis realizados a los pacientes.
-- **`id`** (`VARCHAR(36)`): Clave Primaria.
-- **`patient_id`** (`VARCHAR(36)`): FK hacia `patients(id)` (`NOT NULL`).
-- **`tracking_code`** (`VARCHAR(50)`): Código único de seguimiento del kit físico (**Único**, `NOT NULL`).
-- **`analysis_date`** (`VARCHAR(20)`): Fecha de ejecución del análisis (`NOT NULL`).
-- **`diversity_index`** (`DECIMAL(4,2)`): Índice numérico de diversidad de la microbiota (`NOT NULL`).
-- **`dysbiosis_level`** (`VARCHAR(20)`): Grado de desbarajuste/disbiosis (`OPTIMAL`, `MILD`, `SEVERE`) (`NOT NULL`).
-- **`status`** (`VARCHAR(20)`): Ciclo de vida (`REQUESTED`, `PROCESSING`, `PENDING_REVIEW`, `PUBLISHED`) (`NOT NULL`).
-
----
-
-### 6. `biomarkers`
-Marcadores biológicos específicos asociados a un informe de microbioma.
-- **`id`** (`VARCHAR(36)`): Clave Primaria.
-- **`report_id`** (`VARCHAR(36)`): FK hacia `microbiome_reports(id)` (`NOT NULL`).
-- **`name`** (`VARCHAR(100)`): Nombre del biomarcador o filotipo (`NOT NULL`).
-- **`category`** (`VARCHAR(100)`): Categoría o función (`NOT NULL`).
-- **`current_value`** (`DECIMAL(5,2)`): Valor obtenido en el examen (`NOT NULL`).
-- **`min_ref`** (`DECIMAL(5,2)`): Límite mínimo de referencia (`NOT NULL`).
-- **`max_ref`** (`DECIMAL(5,2)`): Límite máximo de referencia (`NOT NULL`).
-- **`unit`** (`VARCHAR(20)`): Unidad de medida (`NOT NULL`).
-- **`status`** (`VARCHAR(20)`): Diagnóstico rápido (`NORMAL`, `HIGH`, `LOW`) (`NOT NULL`).
-
----
-
-### 7. `action_plans`
-Recomendaciones e intervenciones personalizadas basadas en el reporte de microbioma.
-- **`id`** (`VARCHAR(36)`): Clave Primaria.
-- **`report_id`** (`VARCHAR(36)`): FK hacia `microbiome_reports(id)` (`NOT NULL`).
-- **`category`** (`VARCHAR(30)`): Tipo de acción (`NUTRITION`, `SUPPLEMENTATION`, `LIFESTYLE`) (`NOT NULL`).
-- **`title`** (`VARCHAR(150)`): Título de la recomendación (`NOT NULL`).
-- **`description`** (`TEXT`): Explicación detallada del plan (`NOT NULL`).
-- **`priority`** (`VARCHAR(20)`): Prioridad (`HIGH`, `MEDIUM`, `LOW`) (`NOT NULL`).
+> `patients.doctor_id = NULL` representa un paciente sin doctor asignado (cliente libre gestionado directamente por la clínica).
