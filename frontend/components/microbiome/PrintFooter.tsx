@@ -19,9 +19,10 @@ export const PrintFooter: React.FC<Props> = ({
   reportId = "PX-8921",
 }) => {
   // URL real codificada en el QR para validación médica
-  const verificationUrl = `https://microbiome-reports.com/verify?id=${reportId}&hash=${encodeURIComponent(
-    documentHash
-  )}`;
+  // const verificationUrl = `https://microbiome-reports.com/verify?id=${reportId}&hash=${encodeURIComponent(
+  //   documentHash
+  // )}`;
+  const verificationUrl = 'https://portfolio-personal-black-ten.vercel.app/';
 
   return (
     <div className="hidden print:block pt-6 mt-6 border-t border-slate-200">

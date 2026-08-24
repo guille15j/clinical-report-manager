@@ -72,14 +72,12 @@ export const BiomarkerClinicalBar: React.FC<Props> = ({ biomarker }) => {
           }}
         />
 
-        {/* Indicador de Valor Actual */}
         <div
           className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full border-2 border-white shadow-xs ${theme.dot}`}
           style={{ left: `${valuePct}%` }}
         />
       </div>
 
-      {/* Pie de Línea: Única mención del Rango de Referencia */}
       <div className="flex justify-between text-[10px] text-slate-400 pt-0.5">
         <span>0</span>
         <span className="font-medium text-slate-500">

@@ -30,7 +30,6 @@ export const ActionPlanCard: React.FC<Props> = ({ plan }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-        {/* Recomendaciones Dietéticas */}
         <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100 space-y-2">
           <span className="font-bold text-slate-800 uppercase tracking-wider text-[10px] block text-emerald-700">
             Ajustes Nutricionales
@@ -49,7 +48,6 @@ export const ActionPlanCard: React.FC<Props> = ({ plan }) => {
           </ul>
         </div>
 
-        {/* Suplementación Dirigida */}
         <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100 space-y-2">
           <span className="font-bold text-slate-800 uppercase tracking-wider text-[10px] block text-amber-700">
             Suplementación Específica
@@ -68,7 +66,6 @@ export const ActionPlanCard: React.FC<Props> = ({ plan }) => {
           </ul>
         </div>
 
-        {/* Estilo de Vida y Restricciones */}
         <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100 space-y-2">
           <span className="font-bold text-slate-800 uppercase tracking-wider text-[10px] block text-rose-700">
             Exclusiones Temporales

@@ -1,4 +1,3 @@
-/// components/dashboards/RoleViews.tsx (solo cambian los imports/export de STATUS_THEME, resto igual)
 "use client";
 
 import React, { useMemo, useState } from "react";
@@ -32,7 +31,6 @@ const buildActionPlan = (report: MicrobiomeReport) => ({
   exclusions: report.actionPlan.filter((i) => i.category === "LIFESTYLE").map((i) => `${i.title}: ${i.description}`),
 });
 
-// --- VISTA PACIENTE (sin cambios de lógica, ver versión anterior) ---
 export const PatientView: React.FC = () => {
   const { user } = useAuth();
   const [checked, setChecked] = useState<Record<string, boolean>>({});
@@ -108,7 +106,6 @@ export const PatientView: React.FC = () => {
   );
 };
 
-// --- VISTA DOCTOR: layout en dos columnas para aprovechar el ancho ---
 export const DoctorView: React.FC = () => {
   const { user } = useAuth();
   const doctor = useMemo(() => MOCK_DOCTORS.find((d) => d.userId === user?.id), [user?.id]);
@@ -170,7 +167,7 @@ export const DoctorView: React.FC = () => {
       </Tabs>
 
       <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] xl:grid-cols-[420px_1fr] gap-4 items-start">
-        {/* Columna izquierda: cola de informes */}
+        {/* Columna izquierda  cola de informes */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-2xs overflow-hidden lg:max-h-[calc(100vh-14rem)] lg:overflow-y-auto">
           <Table>
             <TableHeader>
@@ -212,7 +209,7 @@ export const DoctorView: React.FC = () => {
           </Table>
         </div>
 
-        {/* Columna derecha: detalle del informe */}
+        {/* Columna derecha detalle del informe */}
         <div className="min-w-0">
           {selectedReport ? (
             <div className="space-y-4">
@@ -281,7 +278,6 @@ export const DoctorView: React.FC = () => {
   );
 };
 
-// --- VISTA CLÍNICA: layout en grid amplio ---
 export const ClinicView: React.FC = () => {
   const totalPatients = MOCK_PATIENTS.length;
   const severePct = Math.round((MOCK_PATIENTS.filter((p) => p.dysbiosisLevel === "SEVERO").length / totalPatients) * 100);
