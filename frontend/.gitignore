@@ -42,3 +42,4 @@ next-env.d.ts
 
 # archivos propios para ayuda
 comandos_utils.md
+frontend/
