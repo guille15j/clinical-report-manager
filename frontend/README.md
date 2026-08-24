@@ -183,9 +183,3 @@ npm install
 | `npm run build` | Build de producción |
 | `npm run start` | Sirve el build de producción |
 | `npm run lint` | Linting con ESLint (config estricta) |
-
-### Variables de entorno (`.env.local`)
-
-```bash
-NEXT_PUBLIC_API_URL=http://localhost:8080/api
-```

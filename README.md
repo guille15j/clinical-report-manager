@@ -205,3 +205,6 @@ erDiagram
 | `action_plans` | `report_id` | `microbiome_reports(id)` | `fk_action_plans_reports` | N:1 | `NOT NULL` |
 
 > `patients.doctor_id = NULL` representa un paciente sin doctor asignado (cliente libre gestionado directamente por la clínica).
+
+---
+> Consulta `frontend/README.md` y `backend/README.md` para detalles de configuración, scripts y endpoints.
